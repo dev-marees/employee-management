@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ems-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ems
+    ports:
+      - "5432:5432"
+    volumes:
+      - ems_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ems"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ems-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      SERVER_PORT: "8080"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: ems
+      DB_SSLMODE: disable
+      JWT_ACCESS_SECRET: change-me-access-secret
+      JWT_REFRESH_SECRET: change-me-refresh-secret
+      LOG_LEVEL: info
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  ems_pgdata:
