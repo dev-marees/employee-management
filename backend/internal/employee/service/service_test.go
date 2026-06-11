@@ -47,6 +47,15 @@ func (f *fakeRepo) FindByID(_ context.Context, id uuid.UUID) (*model.Employee, e
 	return nil, apperror.ErrNotFound
 }
 
+func (f *fakeRepo) FindByUserID(_ context.Context, userID uuid.UUID) (*model.Employee, error) {
+	for _, e := range f.store {
+		if e.UserID != nil && *e.UserID == userID {
+			return e, nil
+		}
+	}
+	return nil, apperror.ErrNotFound
+}
+
 func (f *fakeRepo) List(_ context.Context, _ repository.Filter) ([]model.Employee, int64, error) {
 	items := make([]model.Employee, 0, len(f.store))
 	for _, e := range f.store {
@@ -67,6 +76,15 @@ func (f *fakeRepo) ExistsByEmail(_ context.Context, email string, excludeID uuid
 func (f *fakeRepo) ExistsByCode(_ context.Context, code string) (bool, error) {
 	for _, e := range f.store {
 		if e.EmployeeCode == code {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (f *fakeRepo) ExistsByUserID(_ context.Context, userID uuid.UUID) (bool, error) {
+	for _, e := range f.store {
+		if e.UserID != nil && *e.UserID == userID {
 			return true, nil
 		}
 	}

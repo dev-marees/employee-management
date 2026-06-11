@@ -48,13 +48,22 @@ func Setup(c *app.Container) *gin.Engine {
 	authd := v1.Group("")
 	authd.Use(middleware.Authenticate(c.JWT))
 	{
-		authd.GET("/dashboard", c.DashboardHandler.Stats)
+		// Management-only access (company-wide views).
+		manageRoles := middleware.RequireRoles(string(authmodel.RoleAdmin), string(authmodel.RoleHR))
+
+		// Self-service: any authenticated role fetches only their own record.
+		// Kept as a top-level path (not /employees/me) to avoid colliding with
+		// the /employees/:id wildcard in Gin's router.
+		authd.GET("/me", c.EmployeeHandler.Me)
+
+		// Company-wide dashboard stats are management-only.
+		authd.GET("/dashboard", manageRoles, c.DashboardHandler.Stats)
 
 		emp := authd.Group("/employees")
 		{
-			// Reads: any authenticated role.
-			emp.GET("", c.EmployeeHandler.List)
-			emp.GET("/:id", c.EmployeeHandler.Get)
+			// Reads: Admin and HR only. Employees use GET /me for their own data.
+			emp.GET("", manageRoles, c.EmployeeHandler.List)
+			emp.GET("/:id", manageRoles, c.EmployeeHandler.Get)
 
 			// Writes: Admin and HR only.
 			writeRoles := middleware.RequireRoles(string(authmodel.RoleAdmin), string(authmodel.RoleHR))

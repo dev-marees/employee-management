@@ -6,6 +6,7 @@ import (
 
 	"github.com/example/ems/internal/employee/dto"
 	"github.com/example/ems/internal/employee/service"
+	"github.com/example/ems/internal/middleware"
 	"github.com/example/ems/pkg/apperror"
 	"github.com/example/ems/pkg/pagination"
 	"github.com/example/ems/pkg/response"
@@ -54,6 +55,34 @@ func (h *Handler) List(c *gin.Context) {
 	}
 	result := pagination.NewResult(items, q.Params, total)
 	response.OK(c, "employees fetched", result)
+}
+
+// Me godoc
+// @Summary      Get the current user's employee record
+// @Description  Returns the employee profile linked to the authenticated user.
+//
+//	Any authenticated role may call this; it only ever returns the caller's
+//	own record. Returns 404 if no employee is linked to the user.
+//
+// @Tags         employees
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  response.Success{data=dto.EmployeeResponse}
+// @Failure      401  {object}  response.Error
+// @Failure      404  {object}  response.Error
+// @Router       /me [get]
+func (h *Handler) Me(c *gin.Context) {
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		response.Fail(c, http.StatusUnauthorized, "unauthenticated")
+		return
+	}
+	res, err := h.svc.GetByID(c.Request.Context(), userID)
+	if err != nil {
+		respondServiceError(c, err)
+		return
+	}
+	response.OK(c, "employee fetched", res)
 }
 
 // Get godoc

@@ -1,3 +1,6 @@
+/* ============================================================
+   Global Reset
+   ============================================================ */
 * {
   margin: 0;
   padding: 0;
@@ -5,228 +8,254 @@
 }
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Segoe UI", Arial, Helvetica, sans-serif;
   background: #f5f7fb;
-  color: #333;
+  color: #1f2937;
+  -webkit-font-smoothing: antialiased;
 }
 
 .landing-container {
   width: 100%;
+  overflow-x: hidden;
 }
 
-/* Hero Section */
-
+/* ============================================================
+   Hero Section
+   ============================================================ */
 .hero-section {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3a8a, #2563eb);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 40px;
-  color: white;
-}
-
-.hero-content {
-  max-width: 900px;
-}
-
-.hero-content h1 {
-  font-size: 4rem;
-  margin-bottom: 20px;
-}
-
-.hero-content p {
-  font-size: 1.2rem;
-  line-height: 1.8;
-  margin-bottom: 30px;
-}
-
-.login-btn {
-  padding: 14px 32px;
-  border: none;
-  border-radius: 8px;
-  background: white;
-  color: #2563eb;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.login-btn:hover {
-  transform: translateY(-3px);
-}
-
-/* Features */
-
-.features-section {
-  padding: 80px 10%;
-}
-
-.features-section h2 {
-  text-align: center;
-  margin-bottom: 40px;
-  font-size: 2.5rem;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-}
-
-.feature-card {
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-.feature-card h3 {
-  margin-bottom: 12px;
-  color: #2563eb;
-}
-
-.feature-card p {
-  line-height: 1.6;
-}
-
-/* Tech Stack */
-
-.tech-section {
-  background: #eef2ff;
-  padding: 80px 10%;
-}
-
-.tech-section h2 {
-  text-align: center;
-  margin-bottom: 40px;
-  font-size: 2.5rem;
-}
-
-.tech-container {
-  display: flex;
-  gap: 30px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.tech-box {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  width: 350px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-.tech-box h3 {
-  margin-bottom: 15px;
-  color: #2563eb;
-}
-
-.tech-box ul {
-  list-style: none;
-}
-
-.tech-box li {
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-}
-
-/* Footer */
-
-.footer {
-  background: #111827;
-  color: white;
-  text-align: center;
-  padding: 20px;
-}
-
-.hero-section {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  background: linear-gradient(135deg, #0f2167 0%, #1e3a8a 45%, #2563eb 100%);
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 50px;
-  padding: 80px 10%;
-  color: white;
+  gap: 60px;
+  padding: 80px 8%;
+  color: #ffffff;
   flex-wrap: wrap;
+  overflow: hidden;
 }
 
+/* Soft decorative glows in the background */
+.hero-section::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.45), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-section::after {
+  content: "";
+  position: absolute;
+  bottom: -140px;
+  left: -100px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.35), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ---------- Hero Left (marketing copy) ---------- */
 .hero-left {
   flex: 1;
-  min-width: 350px;
+  min-width: 340px;
+  position: relative;
+  z-index: 1;
+  animation: fadeUp 0.7s ease both;
 }
 
 .hero-left h1 {
-  font-size: 4rem;
-  margin-bottom: 20px;
+  font-size: 3.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 22px;
+  letter-spacing: -1px;
 }
 
 .hero-left p {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   line-height: 1.8;
-  margin-bottom: 30px;
+  margin-bottom: 34px;
+  max-width: 520px;
+  color: rgba(255, 255, 255, 0.88);
 }
 
+/* ---------- Feature pills ---------- */
 .hero-features {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-  font-size: 1rem;
+  gap: 14px;
+  font-size: 0.98rem;
 }
 
+.hero-features > div {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.hero-features > div:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ---------- Hero Right (auth card column) ---------- */
 .hero-right {
   flex: 1;
+  min-width: 340px;
   display: flex;
-  justify-content: center;
+  justify-content: center;   /* horizontal centering */
+  align-items: center;       /* vertical centering of the card */
+  position: relative;
+  z-index: 1;
 }
 
-.login-card {
+/* ============================================================
+   Auth Page (standalone centered card)
+   ============================================================ */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;   /* horizontal centering */
+  align-items: center;       /* vertical centering */
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #0f2167 0%, #1e3a8a 45%, #2563eb 100%);
+}
+
+/* ============================================================
+   Auth Card (login / register)
+   ============================================================ */
+.auth-card {
   width: 100%;
   max-width: 420px;
-  background: white;
-  color: #333;
-  padding: 35px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  background: #ffffff;
+  color: #1f2937;
+  padding: 40px 35px;
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+  animation: fadeUp 0.7s ease 0.1s both;
 }
 
-.login-card h2 {
+.auth-card h1 {
   text-align: center;
-  margin-bottom: 25px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.3px;
+  color: #0f2167;
+  padding-bottom: 18px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #eef2f7;
 }
 
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: block;
+.auth-card h2 {
+  text-align: center;
   margin-bottom: 8px;
-  font-weight: 600;
+  font-size: 1.7rem;
+  color: #0f2167;
 }
 
-.form-group input {
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.auth-card input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  padding: 13px 15px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
-.login-btn {
+.auth-card input::placeholder {
+  color: #94a3b8;
+}
+
+.auth-card input:focus {
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+
+/* ---------- Submit button ---------- */
+.auth-btn {
   width: 100%;
   padding: 14px;
-  background: #2563eb;
-  color: white;
+  margin-top: 4px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
-  cursor: pointer;
+  border-radius: 10px;
   font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s;
 }
 
+.auth-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+}
+
+.auth-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-btn:disabled {
+  background: #93b4f5;
+  cursor: not-allowed;
+}
+
+/* ---------- Error banner ---------- */
+.auth-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid #fecaca;
+}
+
+/* ---------- Switch login / register link ---------- */
+.switch-text {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 10px;
+  color: #64748b;
+}
+
+.switch-text span {
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.switch-text span:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* ============================================================
+   Floating company logo
+   ============================================================ */
 .company-logo {
   position: fixed;
   bottom: 20px;
@@ -235,51 +264,65 @@ body {
 }
 
 .company-logo img {
-  width: 80px;
+  width: 72px;
   height: auto;
   object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
 }
 
-.auth-card {
-  width: 420px;
-  background: white;
-  padding: 35px;
-  border-radius: 16px;
-  color: #333;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+/* ============================================================
+   Animations
+   ============================================================ */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.auth-card h2 {
-  text-align: center;
-  margin-bottom: 25px;
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 900px) {
+  .hero-section {
+    flex-direction: column;
+    text-align: center;
+    padding: 60px 6%;
+    gap: 40px;
+  }
+
+  .hero-left h1 {
+    font-size: 2.6rem;
+  }
+
+  .hero-left p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-features {
+    justify-items: center;
+  }
+
+  .hero-right {
+    width: 100%;
+  }
 }
 
-.auth-card input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
+@media (max-width: 480px) {
+  .hero-features {
+    grid-template-columns: 1fr;
+  }
 
-.auth-btn {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 8px;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-  font-size: 16px;
-}
+  .auth-card {
+    padding: 32px 24px;
+  }
 
-.switch-text {
-  text-align: center;
-  margin-top: 15px;
-}
-
-.switch-text span {
-  color: #2563eb;
-  font-weight: 600;
-  cursor: pointer;
+  .hero-left h1 {
+    font-size: 2.1rem;
+  }
 }

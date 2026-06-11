@@ -10,6 +10,9 @@ import (
 
 // CreateEmployeeRequest is the payload for POST /employees.
 type CreateEmployeeRequest struct {
+	// UserID optionally links the new employee to an existing user account so
+	// that user can view their own record via GET /me. Omit to leave unlinked.
+	UserID       *uuid.UUID `json:"user_id" binding:"omitempty"`
 	EmployeeCode string  `json:"employee_code" binding:"required,min=2,max=40" example:"EMP-0001"`
 	FirstName    string  `json:"first_name" binding:"required,min=1,max=80" example:"John"`
 	LastName     string  `json:"last_name" binding:"required,min=1,max=80" example:"Smith"`
@@ -51,8 +54,9 @@ type ListQuery struct {
 
 // EmployeeResponse is the public representation of an employee.
 type EmployeeResponse struct {
-	ID           uuid.UUID `json:"id"`
-	EmployeeCode string    `json:"employee_code"`
+	ID           uuid.UUID  `json:"id"`
+	UserID       *uuid.UUID `json:"user_id,omitempty"`
+	EmployeeCode string     `json:"employee_code"`
 	FirstName    string    `json:"first_name"`
 	LastName     string    `json:"last_name"`
 	Email        string    `json:"email"`
@@ -72,6 +76,7 @@ const dateLayout = "2006-01-02"
 func ToResponse(e *model.Employee) EmployeeResponse {
 	return EmployeeResponse{
 		ID:           e.ID,
+		UserID:       e.UserID,
 		EmployeeCode: e.EmployeeCode,
 		FirstName:    e.FirstName,
 		LastName:     e.LastName,

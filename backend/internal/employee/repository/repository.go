@@ -38,9 +38,11 @@ type Repository interface {
 	Update(ctx context.Context, e *model.Employee) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	FindByID(ctx context.Context, id uuid.UUID) (*model.Employee, error)
+	FindByUserID(ctx context.Context, userID uuid.UUID) (*model.Employee, error)
 	List(ctx context.Context, f Filter) ([]model.Employee, int64, error)
 	ExistsByEmail(ctx context.Context, email string, excludeID uuid.UUID) (bool, error)
 	ExistsByCode(ctx context.Context, code string) (bool, error)
+	ExistsByUserID(ctx context.Context, userID uuid.UUID) (bool, error)
 }
 
 type repository struct {
@@ -73,6 +75,18 @@ func (r *repository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 func (r *repository) FindByID(ctx context.Context, id uuid.UUID) (*model.Employee, error) {
 	var e model.Employee
 	err := r.db.WithContext(ctx).First(&e, "id = ?", id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, apperror.ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &e, nil
+}
+
+func (r *repository) FindByUserID(ctx context.Context, userID uuid.UUID) (*model.Employee, error) {
+	var e model.Employee
+	err := r.db.WithContext(ctx).First(&e, "user_id = ?", userID).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, apperror.ErrNotFound
 	}
@@ -126,6 +140,12 @@ func (r *repository) ExistsByEmail(ctx context.Context, email string, excludeID 
 func (r *repository) ExistsByCode(ctx context.Context, code string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&model.Employee{}).Where("employee_code = ?", code).Count(&count).Error
+	return count > 0, err
+}
+
+func (r *repository) ExistsByUserID(ctx context.Context, userID uuid.UUID) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Model(&model.Employee{}).Where("user_id = ?", userID).Count(&count).Error
 	return count > 0, err
 }
 

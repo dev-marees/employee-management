@@ -49,6 +49,14 @@ func (s *service) Create(ctx context.Context, req dto.CreateEmployeeRequest) (*d
 	} else if exists {
 		return nil, apperror.ErrConflict
 	}
+	// Guard the one-employee-per-user invariant before hitting the DB constraint.
+	if req.UserID != nil {
+		if exists, err := s.repo.ExistsByUserID(ctx, *req.UserID); err != nil {
+			return nil, err
+		} else if exists {
+			return nil, apperror.ErrConflict
+		}
+	}
 
 	status := model.Status(req.Status)
 	if req.Status == "" {
@@ -57,6 +65,7 @@ func (s *service) Create(ctx context.Context, req dto.CreateEmployeeRequest) (*d
 
 	e := &model.Employee{
 		ID:           uuid.New(),
+		UserID:       req.UserID,
 		EmployeeCode: req.EmployeeCode,
 		FirstName:    req.FirstName,
 		LastName:     req.LastName,

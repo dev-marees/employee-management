@@ -21,7 +21,11 @@ func (s Status) Valid() bool {
 
 // Employee is the core domain entity. Soft deletes are enabled via DeletedAt.
 type Employee struct {
-	ID           uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	ID uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
+	// UserID links this employee record to its authenticatable user account.
+	// Nullable: an employee may exist before a login is provisioned. The unique
+	// index enforces at most one employee per user.
+	UserID       *uuid.UUID     `gorm:"type:uuid;uniqueIndex" json:"user_id,omitempty"`
 	EmployeeCode string         `gorm:"type:varchar(40);uniqueIndex;not null" json:"employee_code"`
 	FirstName    string         `gorm:"type:varchar(80);not null;index" json:"first_name"`
 	LastName     string         `gorm:"type:varchar(80);not null;index" json:"last_name"`
