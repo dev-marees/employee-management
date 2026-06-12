@@ -3,7 +3,7 @@ import { apiRequest } from "./client";
 //Get Employees
 export function listEmployees(params = {}) {
     const qs = new URLSearchParams(params).toString();
-    return apiRequest(`/employees/${qs ? `?${qs}`: ""}`, {auth: true})
+    return apiRequest(`/employees${qs ? `?${qs}`: ""}`, {auth: true})
 }
 
 //Get EmployeeById
