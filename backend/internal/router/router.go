@@ -56,6 +56,10 @@ func Setup(c *app.Container) *gin.Engine {
 		// the /employees/:id wildcard in Gin's router.
 		authd.GET("/me", c.EmployeeHandler.Me)
 
+		// Any authenticated user can change their own password (used by the
+		// forced first-login reset and voluntary changes).
+		authd.POST("/auth/change-password", c.AuthHandler.ChangePassword)
+
 		// Company-wide dashboard stats are management-only.
 		authd.GET("/dashboard", manageRoles, c.DashboardHandler.Stats)
 

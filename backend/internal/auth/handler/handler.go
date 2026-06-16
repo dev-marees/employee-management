@@ -6,6 +6,7 @@ import (
 
 	"github.com/example/ems/internal/auth/dto"
 	"github.com/example/ems/internal/auth/service"
+	"github.com/example/ems/internal/middleware"
 	"github.com/example/ems/pkg/apperror"
 	"github.com/example/ems/pkg/response"
 	"github.com/example/ems/pkg/validation"
@@ -94,6 +95,39 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 	response.OK(c, "token refreshed", res)
+}
+
+// ChangePassword godoc
+// @Summary      Change the current user's password
+// @Description  Verifies the current password and sets a new one. Used for the
+//
+//	forced first-login reset (must_change_password) and voluntary changes.
+//
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        payload  body      dto.ChangePasswordRequest  true  "Change password payload"
+// @Success      200      {object}  response.Success
+// @Failure      400      {object}  response.Error
+// @Failure      401      {object}  response.Error
+// @Router       /auth/change-password [post]
+func (h *Handler) ChangePassword(c *gin.Context) {
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		response.Fail(c, http.StatusUnauthorized, "unauthenticated")
+		return
+	}
+	var req dto.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondBindError(c, err)
+		return
+	}
+	if err := h.svc.ChangePassword(c.Request.Context(), userID, req); err != nil {
+		respondServiceError(c, err)
+		return
+	}
+	response.OK(c, "password changed successfully", nil)
 }
 
 func respondBindError(c *gin.Context, err error) {

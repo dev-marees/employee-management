@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	authmodel "github.com/example/ems/internal/auth/model"
 	"github.com/example/ems/internal/employee/dto"
 	"github.com/example/ems/internal/employee/model"
 	"github.com/example/ems/internal/employee/repository"
@@ -23,6 +25,18 @@ func newFakeRepo() *fakeRepo {
 }
 
 func (f *fakeRepo) Create(_ context.Context, e *model.Employee) error {
+	f.store[e.ID] = e
+	return nil
+}
+
+func (f *fakeRepo) CreateWithUser(_ context.Context, e *model.Employee, u *authmodel.User) error {
+	for _, ex := range f.store {
+		if ex.Email == e.Email {
+			return apperror.ErrConflict
+		}
+	}
+	e.UserID = &u.ID
+	e.EmployeeCode = fmt.Sprintf("EMP%03d", len(f.store)+1)
 	f.store[e.ID] = e
 	return nil
 }
@@ -93,13 +107,13 @@ func (f *fakeRepo) ExistsByUserID(_ context.Context, userID uuid.UUID) (bool, er
 
 func validCreateReq() dto.CreateEmployeeRequest {
 	return dto.CreateEmployeeRequest{
-		EmployeeCode: "EMP-001",
-		FirstName:    "John",
-		LastName:     "Smith",
-		Email:        "John.Smith@Acme.com",
-		Department:   "Engineering",
-		Salary:       90000,
-		JoiningDate:  "2023-04-01",
+		FirstName:   "John",
+		LastName:    "Smith",
+		Email:       "John.Smith@Acme.com",
+		Password:    "Temp@1234",
+		Department:  "Engineering",
+		Salary:      90000,
+		JoiningDate: "2023-04-01",
 	}
 }
 
@@ -107,7 +121,8 @@ func TestCreateSuccess(t *testing.T) {
 	svc := New(newFakeRepo())
 	res, err := svc.Create(context.Background(), validCreateReq())
 	require.NoError(t, err)
-	assert.Equal(t, "EMP-001", res.EmployeeCode)
+	assert.Equal(t, "EMP001", res.EmployeeCode, "code should be auto-generated")
+	assert.NotNil(t, res.UserID, "a user account should be linked")
 	assert.Equal(t, "john.smith@acme.com", res.Email, "email should be normalized")
 	assert.Equal(t, "active", res.Status, "status should default to active")
 	assert.Equal(t, "2023-04-01", res.JoiningDate)
@@ -121,14 +136,13 @@ func TestCreateInvalidDate(t *testing.T) {
 	assert.ErrorIs(t, err, apperror.ErrInvalidInput)
 }
 
-func TestCreateDuplicateCode(t *testing.T) {
+func TestCreateDuplicateEmail(t *testing.T) {
 	svc := New(newFakeRepo())
 	_, err := svc.Create(context.Background(), validCreateReq())
 	require.NoError(t, err)
 
-	dup := validCreateReq()
-	dup.Email = "other@acme.com"
-	_, err = svc.Create(context.Background(), dup)
+	// Same email → conflict (email is shared with the provisioned user account).
+	_, err = svc.Create(context.Background(), validCreateReq())
 	assert.ErrorIs(t, err, apperror.ErrConflict)
 }
 

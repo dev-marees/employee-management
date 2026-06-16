@@ -8,21 +8,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateEmployeeRequest is the payload for POST /employees.
+// CreateEmployeeRequest is the payload for POST /employees. The backend
+// provisions a linked user account (using Email + Password) and auto-generates
+// the employee code, so neither employee_code nor user_id is accepted here.
 type CreateEmployeeRequest struct {
-	// UserID optionally links the new employee to an existing user account so
-	// that user can view their own record via GET /me. Omit to leave unlinked.
-	UserID       *uuid.UUID `json:"user_id" binding:"omitempty"`
-	EmployeeCode string  `json:"employee_code" binding:"required,min=2,max=40" example:"EMP-0001"`
-	FirstName    string  `json:"first_name" binding:"required,min=1,max=80" example:"John"`
-	LastName     string  `json:"last_name" binding:"required,min=1,max=80" example:"Smith"`
-	Email        string  `json:"email" binding:"required,email" example:"john.smith@acme.com"`
-	Phone        string  `json:"phone" binding:"omitempty,max=20" example:"+14155550123"`
-	Department   string  `json:"department" binding:"required,max=80" example:"Engineering"`
-	Designation  string  `json:"designation" binding:"omitempty,max=80" example:"Senior Engineer"`
-	Salary       float64 `json:"salary" binding:"gte=0" example:"95000"`
-	JoiningDate  string  `json:"joining_date" binding:"required" example:"2023-04-01"` // YYYY-MM-DD
-	Status       string  `json:"status" binding:"omitempty,oneof=active inactive" example:"active"`
+	FirstName   string  `json:"first_name" binding:"required,min=1,max=80" example:"John"`
+	LastName    string  `json:"last_name" binding:"required,min=1,max=80" example:"Smith"`
+	Email       string  `json:"email" binding:"required,email" example:"john.smith@acme.com"`
+	// Password is the temporary password for the new user account. The user is
+	// forced to change it on first login.
+	Password    string  `json:"password" binding:"required,min=8,max=72" example:"Temp@1234"`
+	Phone       string  `json:"phone" binding:"omitempty,max=20" example:"+14155550123"`
+	Department  string  `json:"department" binding:"required,max=80" example:"Engineering"`
+	Designation string  `json:"designation" binding:"omitempty,max=80" example:"Senior Engineer"`
+	Salary      float64 `json:"salary" binding:"gte=0" example:"95000"`
+	JoiningDate string  `json:"joining_date" binding:"required" example:"2023-04-01"` // YYYY-MM-DD
+	Status      string  `json:"status" binding:"omitempty,oneof=active inactive" example:"active"`
 }
 
 // UpdateEmployeeRequest is the payload for PUT /employees/:id. All fields are

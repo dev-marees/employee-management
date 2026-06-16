@@ -17,6 +17,7 @@ type Repository interface {
 	FindByEmail(ctx context.Context, email string) (*model.User, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*model.User, error)
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
+	UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error
 }
 
 type repository struct {
@@ -59,4 +60,21 @@ func (r *repository) ExistsByEmail(ctx context.Context, email string) (bool, err
 	var count int64
 	err := r.db.WithContext(ctx).Model(&model.User{}).Where("email = ?", email).Count(&count).Error
 	return count > 0, err
+}
+
+// UpdatePassword sets a new password hash and clears the must-change flag.
+func (r *repository) UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
+	res := r.db.WithContext(ctx).Model(&model.User{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"password_hash":        passwordHash,
+			"must_change_password": false,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return apperror.ErrNotFound
+	}
+	return nil
 }

@@ -26,13 +26,20 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
+// ChangePasswordRequest is the payload for POST /auth/change-password.
+type ChangePasswordRequest struct {
+	CurrentPassword string `json:"current_password" binding:"required" example:"Temp@1234"`
+	NewPassword     string `json:"new_password" binding:"required,min=8,max=72" example:"MyNewPass1"`
+}
+
 // UserResponse is the public representation of a user.
 type UserResponse struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
+	ID                 uuid.UUID `json:"id"`
+	Name               string    `json:"name"`
+	Email              string    `json:"email"`
+	Role               string    `json:"role"`
+	MustChangePassword bool      `json:"must_change_password"`
+	CreatedAt          time.Time `json:"created_at"`
 }
 
 // AuthResponse bundles the issued tokens with the user profile.
@@ -55,10 +62,11 @@ type TokenResponse struct {
 // ToUserResponse maps a User model to its public DTO.
 func ToUserResponse(u *model.User) UserResponse {
 	return UserResponse{
-		ID:        u.ID,
-		Name:      u.Name,
-		Email:     u.Email,
-		Role:      string(u.Role),
-		CreatedAt: u.CreatedAt,
+		ID:                 u.ID,
+		Name:               u.Name,
+		Email:              u.Email,
+		Role:               string(u.Role),
+		MustChangePassword: u.MustChangePassword,
+		CreatedAt:          u.CreatedAt,
 	}
 }

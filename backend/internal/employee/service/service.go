@@ -5,10 +5,12 @@ import (
 	"strings"
 	"time"
 
+	authmodel "github.com/example/ems/internal/auth/model"
 	"github.com/example/ems/internal/employee/dto"
 	"github.com/example/ems/internal/employee/model"
 	"github.com/example/ems/internal/employee/repository"
 	"github.com/example/ems/pkg/apperror"
+	"github.com/example/ems/pkg/hash"
 	"github.com/google/uuid"
 )
 
@@ -20,6 +22,7 @@ type Service interface {
 	Update(ctx context.Context, id uuid.UUID, req dto.UpdateEmployeeRequest) (*dto.EmployeeResponse, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*dto.EmployeeResponse, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*dto.EmployeeResponse, error)
 	List(ctx context.Context, q dto.ListQuery) ([]dto.EmployeeResponse, int64, error)
 }
 
@@ -39,23 +42,9 @@ func (s *service) Create(ctx context.Context, req dto.CreateEmployeeRequest) (*d
 
 	email := strings.ToLower(strings.TrimSpace(req.Email))
 
-	if exists, err := s.repo.ExistsByCode(ctx, req.EmployeeCode); err != nil {
+	hashed, err := hash.Password(req.Password)
+	if err != nil {
 		return nil, err
-	} else if exists {
-		return nil, apperror.ErrConflict
-	}
-	if exists, err := s.repo.ExistsByEmail(ctx, email, uuid.Nil); err != nil {
-		return nil, err
-	} else if exists {
-		return nil, apperror.ErrConflict
-	}
-	// Guard the one-employee-per-user invariant before hitting the DB constraint.
-	if req.UserID != nil {
-		if exists, err := s.repo.ExistsByUserID(ctx, *req.UserID); err != nil {
-			return nil, err
-		} else if exists {
-			return nil, apperror.ErrConflict
-		}
 	}
 
 	status := model.Status(req.Status)
@@ -63,21 +52,31 @@ func (s *service) Create(ctx context.Context, req dto.CreateEmployeeRequest) (*d
 		status = model.StatusActive
 	}
 
-	e := &model.Employee{
-		ID:           uuid.New(),
-		UserID:       req.UserID,
-		EmployeeCode: req.EmployeeCode,
-		FirstName:    req.FirstName,
-		LastName:     req.LastName,
-		Email:        email,
-		Phone:        req.Phone,
-		Department:   req.Department,
-		Designation:  req.Designation,
-		Salary:       req.Salary,
-		JoiningDate:  joiningDate,
-		Status:       status,
+	// Provision the login account. Role defaults to Employee and the user is
+	// forced to change the temporary password on first login. The employee code
+	// and user_id link are assigned atomically by the repository.
+	user := &authmodel.User{
+		ID:                 uuid.New(),
+		Name:               strings.TrimSpace(req.FirstName + " " + req.LastName),
+		Email:              email,
+		PasswordHash:       hashed,
+		Role:               authmodel.RoleEmployee,
+		MustChangePassword: true,
 	}
-	if err := s.repo.Create(ctx, e); err != nil {
+
+	e := &model.Employee{
+		ID:          uuid.New(),
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		Email:       email,
+		Phone:       req.Phone,
+		Department:  req.Department,
+		Designation: req.Designation,
+		Salary:      req.Salary,
+		JoiningDate: joiningDate,
+		Status:      status,
+	}
+	if err := s.repo.CreateWithUser(ctx, e, user); err != nil {
 		return nil, err
 	}
 	resp := dto.ToResponse(e)
@@ -141,6 +140,17 @@ func (s *service) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (s *service) GetByID(ctx context.Context, id uuid.UUID) (*dto.EmployeeResponse, error) {
 	e, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	resp := dto.ToResponse(e)
+	return &resp, nil
+}
+
+// GetByUserID returns the employee record linked to the given user account.
+// Backs GET /me so a logged-in user can fetch only their own details.
+func (s *service) GetByUserID(ctx context.Context, userID uuid.UUID) (*dto.EmployeeResponse, error) {
+	e, err := s.repo.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

@@ -77,7 +77,7 @@ func (h *Handler) Me(c *gin.Context) {
 		response.Fail(c, http.StatusUnauthorized, "unauthenticated")
 		return
 	}
-	res, err := h.svc.GetByID(c.Request.Context(), userID)
+	res, err := h.svc.GetByUserID(c.Request.Context(), userID)
 	if err != nil {
 		respondServiceError(c, err)
 		return

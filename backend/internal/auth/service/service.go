@@ -19,6 +19,7 @@ type Service interface {
 	Register(ctx context.Context, req dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(ctx context.Context, req dto.LoginRequest) (*dto.AuthResponse, error)
 	Refresh(ctx context.Context, refreshToken string) (*dto.TokenResponse, error)
+	ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error
 }
 
 type service struct {
@@ -103,6 +104,23 @@ func (s *service) Refresh(ctx context.Context, refreshToken string) (*dto.TokenR
 		TokenType:    pair.TokenType,
 		ExpiresIn:    pair.ExpiresIn,
 	}, nil
+}
+
+// ChangePassword verifies the user's current password and, if correct, stores a
+// new hashed password and clears the must-change-password flag.
+func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, req dto.ChangePasswordRequest) error {
+	user, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		return apperror.ErrUnauthorized
+	}
+	if !hash.Compare(user.PasswordHash, req.CurrentPassword) {
+		return apperror.ErrUnauthorized
+	}
+	hashed, err := hash.Password(req.NewPassword)
+	if err != nil {
+		return err
+	}
+	return s.repo.UpdatePassword(ctx, userID, hashed)
 }
 
 func (s *service) buildAuthResponse(user *model.User) (*dto.AuthResponse, error) {

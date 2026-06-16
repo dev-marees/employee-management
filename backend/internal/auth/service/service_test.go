@@ -53,6 +53,16 @@ func (f *fakeRepo) ExistsByEmail(_ context.Context, email string) (bool, error) 
 	return ok, nil
 }
 
+func (f *fakeRepo) UpdatePassword(_ context.Context, id uuid.UUID, passwordHash string) error {
+	u, ok := f.byID[id]
+	if !ok {
+		return apperror.ErrNotFound
+	}
+	u.PasswordHash = passwordHash
+	u.MustChangePassword = false
+	return nil
+}
+
 func newTestService() (Service, *fakeRepo) {
 	repo := newFakeRepo()
 	mgr := jwt.NewManager("a", "r", time.Minute, time.Hour, "test")

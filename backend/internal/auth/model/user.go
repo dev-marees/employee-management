@@ -32,8 +32,11 @@ type User struct {
 	Email        string    `gorm:"type:varchar(160);uniqueIndex;not null" json:"email"`
 	PasswordHash string    `gorm:"type:varchar(255);not null" json:"-"`
 	Role         Role      `gorm:"type:varchar(20);not null;default:'Employee'" json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	// MustChangePassword is set when an account is provisioned by an admin with a
+	// temporary password; it forces a password reset on the user's first login.
+	MustChangePassword bool      `gorm:"not null;default:false" json:"must_change_password"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
 }
 
 func (User) TableName() string { return "users" }

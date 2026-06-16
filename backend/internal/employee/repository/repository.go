@@ -3,13 +3,20 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
+	authmodel "github.com/example/ems/internal/auth/model"
 	"github.com/example/ems/internal/employee/model"
 	"github.com/example/ems/pkg/apperror"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+// empCodeLockKey is an arbitrary, stable key for the Postgres transaction-level
+// advisory lock that serializes employee-code generation across concurrent
+// creates (prevents two requests from picking the same EMP### number).
+const empCodeLockKey int64 = 480127
 
 // Filter captures the validated, repository-level query criteria.
 type Filter struct {
@@ -35,6 +42,9 @@ var allowedSortColumns = map[string]string{
 // Repository abstracts employee persistence.
 type Repository interface {
 	Create(ctx context.Context, e *model.Employee) error
+	// CreateWithUser provisions a user account and its employee record in one
+	// transaction, auto-generating the employee code and linking user_id.
+	CreateWithUser(ctx context.Context, e *model.Employee, u *authmodel.User) error
 	Update(ctx context.Context, e *model.Employee) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 	FindByID(ctx context.Context, id uuid.UUID) (*model.Employee, error)
@@ -55,6 +65,59 @@ func New(db *gorm.DB) Repository {
 
 func (r *repository) Create(ctx context.Context, e *model.Employee) error {
 	return r.db.WithContext(ctx).Create(e).Error
+}
+
+func (r *repository) CreateWithUser(ctx context.Context, e *model.Employee, u *authmodel.User) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Serialize code generation so concurrent creates can't pick the same
+		// number. The lock is held until the transaction commits/rolls back.
+		if err := tx.Exec("SELECT pg_advisory_xact_lock(?)", empCodeLockKey).Error; err != nil {
+			return err
+		}
+
+		// Email must be free across both user accounts and employee records.
+		var cnt int64
+		if err := tx.Model(&authmodel.User{}).Where("email = ?", u.Email).Count(&cnt).Error; err != nil {
+			return err
+		}
+		if cnt > 0 {
+			return apperror.ErrConflict
+		}
+		if err := tx.Model(&model.Employee{}).Where("email = ?", e.Email).Count(&cnt).Error; err != nil {
+			return err
+		}
+		if cnt > 0 {
+			return apperror.ErrConflict
+		}
+
+		if err := tx.Create(u).Error; err != nil {
+			return err
+		}
+
+		code, err := nextEmployeeCode(tx)
+		if err != nil {
+			return err
+		}
+		e.EmployeeCode = code
+		e.UserID = &u.ID
+		return tx.Create(e).Error
+	})
+}
+
+// nextEmployeeCode returns the next sequential code in EMP### format (EMP001,
+// EMP002, …). It reads the highest existing numeric suffix — including
+// soft-deleted rows (Unscoped) so codes are never reused — and increments it.
+// Must be called inside the advisory-locked transaction.
+func nextEmployeeCode(tx *gorm.DB) (string, error) {
+	var maxN int64
+	row := tx.Unscoped().Model(&model.Employee{}).
+		Where("employee_code ~ ?", `^EMP[0-9]+$`).
+		Select(`COALESCE(MAX(CAST(SUBSTRING(employee_code FROM 4) AS INTEGER)), 0)`).
+		Row()
+	if err := row.Scan(&maxN); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("EMP%03d", maxN+1), nil
 }
 
 func (r *repository) Update(ctx context.Context, e *model.Employee) error {
