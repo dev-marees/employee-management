@@ -28,7 +28,7 @@ function AdminDashboard() {
         }
     }
 
-    useEffect(() => { loadData(); },[])
+    useEffect(() => { loadData(); }, [])
 
     if (loading) return <p className="dash-state">Loading...</p>
     if (error) return <p className="dash-state dash-error">{error}</p>
@@ -49,7 +49,6 @@ function AdminDashboard() {
                     <div className="stat-icon green">✅</div>
                     <div className="stat-info">
                         <span className="stat-label">Active</span>
-                        {/* TODO: {stats.active_employees} */}
                         <strong className="stat-value">{stats.active_employees}</strong>
                     </div>
                 </div>
@@ -57,9 +56,8 @@ function AdminDashboard() {
                 <div className="stat-card">
                     <div className="stat-icon red">⛔</div>
                     <div className="stat-info">
-                            <span className="stat-label">Inactive</span>
-                            {/* TODO: {stats.inactive_employees} */}
-                            <strong className="stat-value">{stats.inactive_employees}</strong>
+                        <span className="stat-label">Inactive</span>
+                        <strong className="stat-value">{stats.inactive_employees}</strong>
                     </div>
                 </div>
 
@@ -80,7 +78,7 @@ function AdminDashboard() {
                         <div className="dept-row" key={d.department}>
                             <span className="dept-name">{d.department}</span>
                             <div className="dept-bar">
-                            <div className="dept-bar-fill" style={{ width: `${(d.count / maxDept) * 100}%` }} />
+                                <div className="dept-bar-fill" style={{ width: `${(d.count / maxDept) * 100}%` }} />
                             </div>
                             <span className="dept-count">{d.count}</span>
                         </div>
